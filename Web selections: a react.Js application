@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+
+// Component for user registration
+const RegisterForm = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    // Logic to register user
+    console.log('Registering user:', email, password);
+    setEmail('');
+    setPassword('');
+  };
+
+  return (
+    <form onSubmit={handleRegister}>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />
+      <button type="submit">Register</button>
+    </form>
+  );
+};
+
+// Component for uploading images/videos
+const MediaUploadForm = () => {
+  const [media, setMedia] = useState(null);
+
+  const handleMediaUpload = (e) => {
+    // Logic to upload media
+    const file = e.target.files[0];
+    setMedia(file);
+  };
+
+  return (
+    <form>
+      <input type="file" accept="image/*, video/*" onChange={handleMediaUpload} />
+      <button disabled={!media} type="submit">Upload</button>
+    </form>
+  );
+};
+
+// Main application component
+const App = () => {
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [comments, setComments] = useState([]);
+
+  useEffect(() => {
+    // Fetch posts and comments from backend API
+    fetch('https://api.example.com/posts')
+      .then((response) => response.json())
+      .then((data) => setPosts(data));
+
+    fetch('https://api.example.com/comments')
+      .then((response) => response.json())
+      .then((data) => setComments(data));
+
+    // Simulate real-time updates with WebSocket
+    const socket = new WebSocket('wss://api.example.com/realtime');
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log('Received real-time update:', data);
+      // Update posts or comments based on real-time data
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
+
+  const handleLike = (postId) => {
+    // Logic to handle post like
+    console.log('Liked post:', postId);
+  };
+
+  const handleComment = (postId) => {
+    // Logic to handle commenting on post
+    console.log('Commenting on post:', postId);
+  };
+
+  const handleLogout = () => {
+    // Logic to logout user
+    setUser(null);
+  };
+
+  return (
+    <Router>
+      <div>
+        <nav>
+          <ul>
+            <li>
+              <Link to="/">Home</Link>
+            </li>
+            <li>
+              <Link to="/profile">Profile</Link>
+            </li>
+            <li>
+              <Link to="/explore">Explore</Link>
+            </li>
+            {user ? (
+              <li>
+                <button onClick={handleLogout}>Logout</button>
+              </li>
+            ) : (
+              <>
+                <li>
+                  <Link to="/login">Login</Link>
+                </li>
+                <li>
+                  <Link to="/register">Register</Link>
+                </li>
+              </>
+            )}
+          </ul>
+        </nav>
+
+        <Switch>
+          <Route path="/login">
+            <h2>Login</h2>
+            {/* LoginForm component */}
+          </Route>
+          <Route path="/register">
+            <h2>Register</h2>
+            {/* RegisterForm component */}
+          </Route>
+          <Route path="/profile">
+            <h2>User Profile</h2>
+            {/* Display user profile information */}
+            <MediaUploadForm />
+          </Route>
+          <Route path="/explore">
+            <h2>Explore</h2>
+            {/* Display explore page */}
+          </Route>
+          <Route path="/">
+            <h2>Home</h2>
+            {/* Display PostForm for creating new posts */}
+            <MediaUploadForm />
+            {/* Display posts and comments */}
+            {posts.map((post) => (
+              <Post
+                key={post.id}
+                post={post}
+                handleLike={handleLike}
+                handleComment={handleComment}
+              />
+            ))}
+            {comments.map((comment) => (
+              <Comment key={comment.id} comment={comment} />
+            ))}
+          </Route>
+        </Switch>
+      </div>
+    </Router>
+  );
+};
+
+export default App;
